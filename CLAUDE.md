@@ -67,6 +67,32 @@ version:
    type when a device is created.
 4. **Port mappings.** `dcim.models.PortMapping`, `PortTemplateMapping`.
 
+## Local test environment
+
+The tests run against a NetBox source checkout of a supported tag, the same
+way as `.github/workflows/test.yml`:
+
+```bash
+# PostgreSQL and Redis on localhost (the credentials match testing/configuration_testing.py)
+docker run -d --name dts-pg -p 127.0.0.1:5432:5432 \
+  -e POSTGRES_USER=netbox -e POSTGRES_PASSWORD=netbox -e POSTGRES_DB=netbox postgres:16
+docker run -d --name dts-redis -p 127.0.0.1:6379:6379 redis:7
+
+# NetBox source and a virtual environment, outside this repository
+git clone --depth 1 --branch v4.7.4 https://github.com/netbox-community/netbox.git ~/netbox-dev/netbox
+virtualenv -p python3.12 ~/netbox-dev/venv
+~/netbox-dev/venv/bin/pip install -r ~/netbox-dev/netbox/requirements.txt tblib
+~/netbox-dev/venv/bin/pip install -e .
+ln -s "$PWD/testing/configuration_testing.py" ~/netbox-dev/netbox/netbox/netbox/configuration.py
+
+# Run the tests
+cd ~/netbox-dev/netbox
+../venv/bin/python netbox/manage.py test netbox_device_type_sync.tests --parallel
+```
+
+If `psycopg[c]` fails to build (no `pg_config`), install the requirements with
+`psycopg[binary,pool]` instead.
+
 ## Supporting a new NetBox version
 
 Do all of the following for every new NetBox version:
