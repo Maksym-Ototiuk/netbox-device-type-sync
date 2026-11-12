@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "netbox-device-type-sync"
-version = "0.1.0"
+version = "1.0.0"
 authors = [
     { name = "Maksym Ototiuk", email = "pypi@masik.slmail.me" },
 ]
@@ -14,7 +14,7 @@ license = "MIT"
 license-files = ["LICENSE"]
 requires-python = ">=3.12"
 classifiers = [
-    "Development Status :: 4 - Beta",
+    "Development Status :: 5 - Production/Stable",
     "Framework :: Django",
     "Intended Audience :: System Administrators",
     "Operating System :: OS Independent",

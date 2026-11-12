@@ -1,7 +1,7 @@
 """
 Check that a release tag matches the plugin version in every file that holds it.
 
-Usage: python scripts/version-check.py v0.1.0
+Usage: python scripts/version-check.py v1.0.0
 """
 
 import re

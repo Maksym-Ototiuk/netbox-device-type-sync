@@ -3,7 +3,7 @@
 All notable changes to netbox-device-type-sync. The versions follow
 [semantic versioning](https://semver.org/).
 
-## 0.1.0 (unreleased)
+## 1.0.0 (2026-11-12)
 
 First release, for NetBox 4.7.4.
 
