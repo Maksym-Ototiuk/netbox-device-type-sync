@@ -12,7 +12,8 @@ name: Test the latest NetBox release
 
 on:
   schedule:
-    - cron: '17 5 * * *'
+    # 11:00 UTC: 12:00 in Germany in winter (CET), 13:00 in summer (CEST)
+    - cron: '0 11 * * *'
   workflow_dispatch:
     inputs:
       dry-run:
@@ -84,8 +85,8 @@ jobs:
           NETBOX_VERSION: ${{ needs.check.outputs.version }}
           PLUGIN_VERSION: ${{ steps.bump.outputs.plugin_version }}
         run: |
-          git config user.name 'Maksym Ototiuk'
-          git config user.email 'git@masik.slmail.me'
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git commit -am "Support NetBox ${NETBOX_VERSION#v}, release $PLUGIN_VERSION"
           git tag -a "v$PLUGIN_VERSION" -m "Release $PLUGIN_VERSION"
           git push origin main "v$PLUGIN_VERSION"
@@ -119,8 +120,8 @@ jobs:
             echo "Branch $branch already exists"
             exit 0
           fi
-          git config user.name 'Maksym Ototiuk'
-          git config user.email 'git@masik.slmail.me'
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git checkout -b "$branch"
           plugin_version=$(python3 scripts/netbox-versions.py add "$NETBOX_VERSION" | tail -n 1)
           git commit -am "Support NetBox ${NETBOX_VERSION#v}, release $plugin_version"

@@ -155,11 +155,11 @@ Report every failing check to the user before changing code.
   of them (`workflow_call`) and publishes to PyPI only if the version check,
   the lint and all tests pass. Keep this dependency when changing the
   workflows.
-- `netbox-latest.yml` runs daily (and manually, as a dry run by default). It
+- `netbox-latest.yml` runs daily at 11:00 UTC (and manually, as a dry run by default). It
   classifies the latest stable NetBox release with
   `scripts/netbox-versions.py classify` and tests it with `test.yml`:
   - `patch`: on success it runs `netbox-versions.py add`, commits as
-    `Maksym Ototiuk <git@masik.slmail.me>`, tags, pushes to `main` and starts
+    `github-actions[bot]`, tags, pushes to `main` and starts
     `publish.yaml` with `workflow_dispatch` (a tag pushed with `GITHUB_TOKEN`
     does not trigger workflows);
   - `minor`: on success it opens a pull request from the branch
@@ -171,6 +171,8 @@ Report every failing check to the user before changing code.
 ## Commits
 
 - Author: `Maksym Ototiuk <git@masik.slmail.me>` (local git config).
+  Commits made by `netbox-latest.yml` are authored by `github-actions[bot]`,
+  as agreed with the user.
 - Do not add a `Co-Authored-By` line to commit messages.
 - Commit or push only when the user has agreed. This applies to work done
   by Claude in this repository, not to GitHub Actions workflows that the
