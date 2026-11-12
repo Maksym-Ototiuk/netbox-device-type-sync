@@ -12,8 +12,8 @@ name: Test the latest NetBox release
 
 on:
   schedule:
-    # 12:00 UTC
-    - cron: '0 12 * * *'
+    # 12:27 UTC (off the full hour, when GitHub delays scheduled runs the most)
+    - cron: '27 12 * * *'
   workflow_dispatch:
     inputs:
       dry-run:
