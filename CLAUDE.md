@@ -66,6 +66,13 @@ version:
 3. **Device creation.** The fields that `Device.save()` copies from the device
    type when a device is created.
 4. **Port mappings.** `dcim.models.PortMapping`, `PortTemplateMapping`.
+5. **Inventory items.** Deprecated since NetBox 4.3 and planned for removal.
+   `components.py` imports `InventoryItem` and `InventoryItemTemplate`
+   optionally; when NetBox removes them, drop the inventory item kind, its
+   properties and tests, and update the README.
+
+The code that relies on items 1–4 lives in `ui.py` (the button),
+`components.py` (templates and properties) and `apply.py` (creation).
 
 ## Local test environment
 
@@ -146,3 +153,7 @@ Report every failing check to the user before changing code.
 - `README.md` must have a Table of Contents with jump links to all sections
   and a "Back to ToC" link at the end of each section.
 - Update `README.md` and `CHANGELOG.md` with every change that affects users.
+- `docs/images/` holds the README screenshots (the Device Type card and the
+  sync page). Retake them when the UI changes. They must not show personal
+  data: crop away the top navigation bar (user name) and the page footer
+  (host name), and use demo data only.
