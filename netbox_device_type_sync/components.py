@@ -25,13 +25,18 @@ from dcim.models import (
     DeviceBayTemplate,
     FrontPortTemplate,
     InterfaceTemplate,
-    InventoryItem,
-    InventoryItemTemplate,
     ModuleBayTemplate,
     PowerOutletTemplate,
     PowerPortTemplate,
     RearPortTemplate,
 )
+
+try:
+    from dcim.models import InventoryItem, InventoryItemTemplate
+except ImportError:
+    # Inventory items are deprecated since NetBox 4.3 and planned for removal.
+    # Without them the plugin simply does not sync inventory items.
+    InventoryItem = InventoryItemTemplate = None
 
 __all__ = (
     'COMPONENT_KINDS',
@@ -574,19 +579,23 @@ COMPONENT_KINDS = (
         ),
     ),
     ComponentKind(DeviceBayTemplate, (FieldProperty('enabled'), LABEL, DESCRIPTION)),
-    ComponentKind(
-        InventoryItemTemplate,
-        (
-            InventoryParentProperty(),
-            InventoryComponentProperty(),
-            FieldProperty('role'),
-            FieldProperty('manufacturer'),
-            FieldProperty('part_id'),
-            LABEL,
-            DESCRIPTION,
-        ),
-    ),
 )
+
+if InventoryItemTemplate is not None:
+    COMPONENT_KINDS += (
+        ComponentKind(
+            InventoryItemTemplate,
+            (
+                InventoryParentProperty(),
+                InventoryComponentProperty(),
+                FieldProperty('role'),
+                FieldProperty('manufacturer'),
+                FieldProperty('part_id'),
+                LABEL,
+                DESCRIPTION,
+            ),
+        ),
+    )
 
 
 def get_kind(key):

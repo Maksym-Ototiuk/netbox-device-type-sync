@@ -13,5 +13,11 @@ class NetBoxDeviceTypeSyncConfig(PluginConfig):
     base_url = 'device-type-sync'
     min_version = '4.7.4'
 
+    def ready(self):
+        super().ready()
+        from .ui import add_sync_button
+
+        add_sync_button()
+
 
 config = NetBoxDeviceTypeSyncConfig
