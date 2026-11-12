@@ -40,6 +40,11 @@ Agreed with the user; do not widen it without asking.
 - Components that exist on the device but not in the device type are ignored.
 - Missing components are created with the template's `instantiate()`, exactly
   as NetBox does when it creates a device (no description).
+- The description of components is never compared or synced, neither for new
+  nor for existing components: NetBox does not copy it from the template
+  (`instantiate()`), and the plugin follows the same logic. `test_coverage.py`
+  lists it in `NOT_SYNCED_TEMPLATE_FIELDS` and checks that `instantiate()`
+  still does not copy it.
 - Device fields: `platform` (from `default_platform`), `airflow`,
   `cooling_method` — the fields NetBox copies from the device type only when
   a device is created. Offered only when the device type has a value that

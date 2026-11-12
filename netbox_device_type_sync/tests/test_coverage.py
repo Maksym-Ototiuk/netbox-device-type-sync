@@ -34,6 +34,10 @@ IGNORED_TEMPLATE_FIELDS = {
     '_abs_max_flow',
 }
 
+# Template fields that NetBox does not copy to a new component
+# (instantiate()); agreed not to sync
+NOT_SYNCED_TEMPLATE_FIELDS = {'description'}
+
 # Every DeviceType field, by what the plugin does with it
 DEVICE_TYPE_FIELDS = {
     # Copied to the device only when it is created: synced by the plugin
@@ -93,7 +97,10 @@ class TemplateCoverageTestCase(SimpleTestCase):
                 for prop in kind.properties:
                     covered.update(prop.template_fields)
                 self.assertEqual(
-                    model_fields(kind.template_model) - IGNORED_TEMPLATE_FIELDS, covered
+                    model_fields(kind.template_model)
+                    - IGNORED_TEMPLATE_FIELDS
+                    - NOT_SYNCED_TEMPLATE_FIELDS,
+                    covered,
                 )
 
     def test_component_models_have_the_template_fields(self):
@@ -139,6 +146,26 @@ class DeviceTypeFieldsTestCase(SimpleTestCase):
         self.assertEqual(
             {f.source for f in DEVICE_FIELDS}, DEVICE_TYPE_FIELDS['synced']
         )
+
+
+class TemplateInstantiationTestCase(SyncTestMixin, TestCase):
+    """
+    The plugin does not sync the description because NetBox does not copy it
+    to a component it instantiates from a template.
+    """
+
+    def test_description_is_not_copied(self):
+        device_type = self.create_device_type('Type 1')
+        device = self.create_device(device_type)
+        for kind in COMPONENT_KINDS:
+            with self.subTest(kind=kind.key):
+                template = kind.template_model(
+                    device_type=device_type,
+                    name='Component 1',
+                    description='Template description',
+                )
+                component = template.instantiate(device=device)
+                self.assertEqual(component.description, '')
 
 
 class DeviceCreationTestCase(SyncTestMixin, TestCase):

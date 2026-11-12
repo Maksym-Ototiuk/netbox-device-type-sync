@@ -3,6 +3,15 @@
 All notable changes to netbox-device-type-sync. The versions follow
 [semantic versioning](https://semver.org/).
 
+## 1.0.1 (2026-11-12)
+
+### Fixed
+
+- The description of components is no longer compared or synced. NetBox does
+  not copy it from the template when it creates a device, and the plugin now
+  follows the same logic for existing components too: the sync page no longer
+  offers a *Description* checkbox.
+
 ## 1.0.0 (2026-11-12)
 
 First release, for NetBox 4.7.4.

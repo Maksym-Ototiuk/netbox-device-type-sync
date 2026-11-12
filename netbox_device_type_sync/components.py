@@ -6,6 +6,10 @@ compares exactly those properties; everything else on a device component
 (cables, IP addresses, VLANs, MAC addresses, custom fields, tags, ...) is never
 read or written.
 
+The one exception is the description. A template has one, but NetBox does not
+copy it to a component it creates for a new device (instantiate()), so the
+plugin does not compare or copy it either.
+
 Each property knows how to read its value from a template and from a device
 component, and how to write the template value to a component. Values are
 compared as plain Python values; every read also returns a human-readable
@@ -487,14 +491,13 @@ class ComponentKind:
 
 
 LABEL = FieldProperty('label')
-DESCRIPTION = FieldProperty('description')
 TYPE = FieldProperty('type')
 
 # In the order NetBox instantiates components for a new device
 # (dcim.models.Device.save()); components that others refer to come first.
 COMPONENT_KINDS = (
-    ComponentKind(ConsolePortTemplate, (TYPE, LABEL, DESCRIPTION)),
-    ComponentKind(ConsoleServerPortTemplate, (TYPE, LABEL, DESCRIPTION)),
+    ComponentKind(ConsolePortTemplate, (TYPE, LABEL)),
+    ComponentKind(ConsoleServerPortTemplate, (TYPE, LABEL)),
     ComponentKind(
         PowerPortTemplate,
         (
@@ -502,7 +505,6 @@ COMPONENT_KINDS = (
             FieldProperty('maximum_draw'),
             FieldProperty('allocated_draw'),
             LABEL,
-            DESCRIPTION,
         ),
     ),
     ComponentKind(
@@ -513,7 +515,6 @@ COMPONENT_KINDS = (
             RelationProperty('power_port'),
             FieldProperty('feed_leg'),
             LABEL,
-            DESCRIPTION,
         ),
     ),
     ComponentKind(
@@ -523,7 +524,6 @@ COMPONENT_KINDS = (
             FieldProperty('diameter', 'diameter_unit'),
             FieldProperty('max_flow', 'max_flow_unit'),
             LABEL,
-            DESCRIPTION,
         ),
     ),
     ComponentKind(
@@ -533,7 +533,6 @@ COMPONENT_KINDS = (
             FieldProperty('diameter', 'diameter_unit'),
             RelationProperty('cooling_intake'),
             LABEL,
-            DESCRIPTION,
         ),
     ),
     ComponentKind(
@@ -550,12 +549,11 @@ COMPONENT_KINDS = (
             RelationProperty('parent'),
             RelationProperty('bridge'),
             LABEL,
-            DESCRIPTION,
         ),
     ),
     ComponentKind(
         RearPortTemplate,
-        (TYPE, FieldProperty('color'), FieldProperty('positions'), LABEL, DESCRIPTION),
+        (TYPE, FieldProperty('color'), FieldProperty('positions'), LABEL),
     ),
     ComponentKind(
         FrontPortTemplate,
@@ -565,7 +563,6 @@ COMPONENT_KINDS = (
             FieldProperty('positions'),
             PortMappingsProperty(),
             LABEL,
-            DESCRIPTION,
         ),
     ),
     ComponentKind(
@@ -575,10 +572,9 @@ COMPONENT_KINDS = (
             FieldProperty('enabled'),
             ModuleBayTypesProperty(),
             LABEL,
-            DESCRIPTION,
         ),
     ),
-    ComponentKind(DeviceBayTemplate, (FieldProperty('enabled'), LABEL, DESCRIPTION)),
+    ComponentKind(DeviceBayTemplate, (FieldProperty('enabled'), LABEL)),
 )
 
 if InventoryItemTemplate is not None:
@@ -592,7 +588,6 @@ if InventoryItemTemplate is not None:
                 FieldProperty('manufacturer'),
                 FieldProperty('part_id'),
                 LABEL,
-                DESCRIPTION,
             ),
         ),
     )

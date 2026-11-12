@@ -74,7 +74,7 @@ class ApplyTestCase(SyncTestMixin, TestCase):
 
         eth0 = device.interfaces.get(name='eth0')
         self.assertEqual(eth0.type, InterfaceTypeChoices.TYPE_10GE_SFP_PLUS)
-        self.assertEqual(eth0.description, '')  # not selected
+        self.assertEqual(eth0.description, '')  # never synced
         self.assertIsNotNone(eth0.cable)
         self.assertEqual(eth0.untagged_vlan, vlan)
         self.assertEqual(eth0.mode, InterfaceModeChoices.MODE_ACCESS)
@@ -96,14 +96,13 @@ class ApplyTestCase(SyncTestMixin, TestCase):
         self.assertEqual(device.interfaces.get(name='eth0').type, '1000base-t')
         self.assertTrue(device.interfaces.filter(name='eth2').exists())
 
-    def test_selected_description(self):
+    def test_description_is_never_synced(self):
         device = self.change_device_type(self.create_device(self.type_1), self.type_2)
 
-        sync(device, selected=['interface.description'])
+        result = sync(device, selected=['interface.description'])
 
-        eth0 = device.interfaces.get(name='eth0')
-        self.assertEqual(eth0.description, 'Uplink')
-        self.assertEqual(eth0.type, '1000base-t')
+        self.assertEqual(device.interfaces.get(name='eth0').description, '')
+        self.assertEqual(result.updated_count, 0)
 
     def test_validation_error_rolls_back_everything(self):
         device = self.create_device(self.type_1)
@@ -116,14 +115,14 @@ class ApplyTestCase(SyncTestMixin, TestCase):
         device = self.change_device_type(device, self.type_2)
 
         with self.assertRaises(SyncError) as cm:
-            sync(device, selected=['interface.type', 'interface.description'])
+            sync(device, selected=['interface.type'])
 
         self.assertEqual(len(cm.exception.errors), 1)
         self.assertIn('Interface eth0', cm.exception.errors[0])
         self.assertIn('cable', cm.exception.errors[0])
         # Nothing was changed: eth2 was not created, eth0 kept its values
         self.assertFalse(device.interfaces.filter(name='eth2').exists())
-        self.assertEqual(device.interfaces.get(name='eth0').description, '')
+        self.assertEqual(device.interfaces.get(name='eth0').type, '1000base-t')
 
     def test_device_fields(self):
         platform = Platform.objects.create(name='Platform 1', slug='platform-1')
@@ -400,18 +399,18 @@ class ApplyPermissionsTestCase(SyncTestMixin, NetBoxTestCase):
             device_type=device_type, name='eth0', type='1000base-t'
         )
         device = self.create_device(device_type)
-        device_type.interfacetemplates.update(description='Uplink')
+        device_type.interfacetemplates.update(mgmt_only=True)
         InterfaceTemplate.objects.create(
             device_type=device_type, name='eth1', type='1000base-t'
         )
         self.add_permissions('dcim.change_interface')
 
         with self.assertRaises(SyncError) as cm:
-            sync(device, selected=['interface.description'], user=self.user)
+            sync(device, selected=['interface.mgmt_only'], user=self.user)
 
         self.assertIn('Interface eth1', cm.exception.errors[0])
         self.assertIn('permission', cm.exception.errors[0])
-        self.assertEqual(device.interfaces.get(name='eth0').description, '')
+        self.assertFalse(device.interfaces.get(name='eth0').mgmt_only)
 
     def test_with_permissions(self):
         device_type = self.create_device_type('Type 1')

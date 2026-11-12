@@ -91,8 +91,9 @@ class DiffTestCase(SyncTestMixin, TestCase):
         )
         self.assertEqual(plan.create_count, 1)
 
-    def test_description_is_compared(self):
-        # NetBox does not copy the description to a new device
+    def test_description_is_not_compared(self):
+        # NetBox does not copy the description to a new device, so the plugin
+        # does not sync it either
         device_type = self.create_device_type('Type 1')
         InterfaceTemplate.objects.create(
             device_type=device_type,
@@ -101,10 +102,13 @@ class DiffTestCase(SyncTestMixin, TestCase):
             description='Uplink',
         )
         device = self.create_device(device_type)
+        self.assertEqual(device.interfaces.get(name='eth0').description, '')
 
-        interfaces = kind_diff(build_plan(device), 'interface')
+        plan = build_plan(device)
+        interfaces = kind_diff(plan, 'interface')
 
-        self.assertEqual(interfaces.update[0].changes['description'].desired, 'Uplink')
+        self.assertEqual(interfaces.update, [])
+        self.assertEqual(plan.selection_keys, [])
 
     def test_virtual_chassis_position_is_resolved(self):
         device_type = self.create_device_type('Type 1')

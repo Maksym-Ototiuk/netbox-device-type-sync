@@ -68,21 +68,22 @@ the NetBox change log with the message `Synced with device type <name>`.
 
 ## What is synchronized
 
-Only the properties that a component template defines are compared:
+Only the properties that a component template defines are compared, except
+the description (see *Never changed* below):
 
 | Component | Properties |
 | --- | --- |
-| Console port, console server port | type, label, description |
-| Power port | type, maximum draw, allocated draw, label, description |
-| Power outlet | type, color, power port, feed leg, label, description |
-| Cooling intake | type, diameter, maximum flow, label, description |
-| Cooling outflow | type, diameter, cooling intake, label, description |
-| Interface | type, enabled, management only, PoE mode, PoE type, wireless role, channels, channel ID, parent, bridge, label, description |
-| Rear port | type, color, positions, label, description |
-| Front port | type, color, positions, port mappings, label, description |
-| Module bay | position, enabled, module bay types, label, description |
-| Device bay | enabled, label, description |
-| Inventory item | parent, component, role, manufacturer, part ID, label, description |
+| Console port, console server port | type, label |
+| Power port | type, maximum draw, allocated draw, label |
+| Power outlet | type, color, power port, feed leg, label |
+| Cooling intake | type, diameter, maximum flow, label |
+| Cooling outflow | type, diameter, cooling intake, label |
+| Interface | type, enabled, management only, PoE mode, PoE type, wireless role, channels, channel ID, parent, bridge, label |
+| Rear port | type, color, positions, label |
+| Front port | type, color, positions, port mappings, label |
+| Module bay | position, enabled, module bay types, label |
+| Device bay | enabled, label |
+| Inventory item | parent, component, role, manufacturer, part ID, label |
 
 Device fields: **platform** (from the default platform of the device type),
 **airflow** and **cooling method**. NetBox copies them from the device type
@@ -93,6 +94,9 @@ has a value and it differs from the device.
 
 - cables, IP addresses, VLANs, MAC addresses, VRFs, MTU, mode, custom fields
   and tags of components — a device type does not define them;
+- the description of components. A template has one, but NetBox does not
+  copy it to the components of a new device, and the plugin follows the same
+  logic;
 - components installed by modules;
 - components that exist on the device but not in the device type;
 - device fields other than the three above. Height, weight, full depth and
@@ -111,8 +115,7 @@ has a value and it differs from the device.
   creates them for a new device, including custom field defaults, interface
   parents and bridges, power outlet power ports, front/rear port mappings and
   module bay types. Like NetBox, the plugin does not copy the description of
-  the template to a new component; select *Description* on a later sync to
-  copy it.
+  the template, neither to a new component nor to an existing one.
 - **Name conflicts.** If the name of a template is used by a component of an
   installed module, the component is not created and the page shows a
   warning.
