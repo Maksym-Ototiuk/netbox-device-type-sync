@@ -1,8 +1,13 @@
 name: Lint
 
 on:
-  - push
-  - pull_request
+  push:
+    # Branches only: a release tag runs the lint through publish.yaml
+    branches:
+      - '**'
+  pull_request:
+  # Called by publish.yaml before a release is published
+  workflow_call:
 
 permissions:
   contents: read

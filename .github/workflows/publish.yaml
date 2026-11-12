@@ -22,9 +22,18 @@ jobs:
       - name: Check versions
         run: python scripts/version-check.py "${{ github.ref_name }}"
 
+  lint:
+    name: Lint
+    uses: ./.github/workflows/lint.yml
+
+  test:
+    name: Tests
+    uses: ./.github/workflows/test.yml
+
   publish:
     name: Publish to PyPI
-    needs: validate
+    # Nothing is published unless the versions match, the lint is clean and all tests pass
+    needs: [validate, lint, test]
     if: github.repository == 'Maksym-Ototiuk/netbox-device-type-sync'
     runs-on: ubuntu-latest
     # must match the environment name in the PyPI trusted publisher settings

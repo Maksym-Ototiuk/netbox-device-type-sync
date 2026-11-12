@@ -140,12 +140,19 @@ Report every failing check to the user before changing code.
   pull requests of forks write access to the repository.
 - Request only the permissions a job needs (`permissions:` per workflow or
   job).
+- `lint.yml` and `test.yml` run on pushes to branches and on pull requests,
+  not on tags. A release tag (`v*`) starts `publish.yaml`, which calls both
+  of them (`workflow_call`) and publishes to PyPI only if the version check,
+  the lint and all tests pass. Keep this dependency when changing the
+  workflows.
 
 ## Commits
 
 - Author: `Maksym Ototiuk <git@masik.slmail.me>` (local git config).
 - Do not add a `Co-Authored-By` line to commit messages.
-- Commit or push only when the user has agreed.
+- Commit or push only when the user has agreed. This applies to work done
+  by Claude in this repository, not to GitHub Actions workflows that the
+  user has agreed to (for example an automatic release workflow).
 
 ## Language and documentation
 
