@@ -1,0 +1,21 @@
+name: Lint
+
+on:
+  - push
+  - pull_request
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - uses: astral-sh/ruff-action@v4.0.0
+        with:
+          version: 0.15.22
+          src: "./netbox_device_type_sync"

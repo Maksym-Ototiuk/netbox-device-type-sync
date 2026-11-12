@@ -1,0 +1,57 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "netbox-device-type-sync"
+version = "0.1.0"
+authors = [
+    { name = "Maksym Ototiuk", email = "pypi@masik.slmail.me" },
+]
+description = "Sync the components of a NetBox device with its device type."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+requires-python = ">=3.12"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Framework :: Django",
+    "Intended Audience :: System Administrators",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+]
+keywords = ["netbox", "netbox-plugin", "device-type", "components", "sync"]
+
+[project.urls]
+Homepage = "https://github.com/Maksym-Ototiuk/netbox-device-type-sync"
+Documentation = "https://github.com/Maksym-Ototiuk/netbox-device-type-sync#readme"
+Changelog = "https://github.com/Maksym-Ototiuk/netbox-device-type-sync/blob/main/CHANGELOG.md"
+Issues = "https://github.com/Maksym-Ototiuk/netbox-device-type-sync/issues"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+include = ["netbox_device_type_sync*"]
+
+[tool.ruff.lint]
+extend-select = ["E4", "E7", "E9", "F", "W", "C", "I"]
+ignore = ["F403", "F405"]
+
+[tool.ruff.lint.isort]
+known-local-folder = ["netbox_device_type_sync"]
+known-first-party = [
+    "netbox",
+    "core",
+    "dcim",
+    "extras",
+    "tenancy",
+    "users",
+    "utilities",
+]
+
+[tool.ruff.format]
+quote-style = "single"

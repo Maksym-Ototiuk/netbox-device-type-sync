@@ -1,0 +1,73 @@
+name: Run tests under NetBox
+
+on:
+  - push
+  - pull_request
+
+permissions:
+  contents: read
+
+jobs:
+  test-netbox:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        netbox-version: ["v4.7.4"]
+    services:
+      redis:
+        image: redis
+        ports:
+          - 6379:6379
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: netbox
+          POSTGRES_PASSWORD: netbox
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v6
+        with:
+          path: netbox-device-type-sync
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Checkout NetBox ${{ matrix.netbox-version }}
+        uses: actions/checkout@v6
+        with:
+          repository: "netbox-community/netbox"
+          ref: ${{ matrix.netbox-version }}
+          path: netbox
+
+      - name: Install netbox_device_type_sync
+        working-directory: netbox-device-type-sync
+        run: |
+          pip install .
+
+      - name: Install dependencies & set up configuration
+        working-directory: netbox
+        run: |
+          ln -s $(pwd)/../netbox-device-type-sync/testing/configuration_testing.py netbox/netbox/configuration.py
+          python -m pip install --upgrade pip
+          python -m pip install tblib
+          pip install -r requirements.txt -U
+
+      - name: Check for missing migrations
+        working-directory: netbox
+        run: python netbox/manage.py makemigrations --check
+
+      - name: Run tests
+        working-directory: netbox
+        run: |
+          python netbox/manage.py test netbox_device_type_sync.tests --parallel -v 2
