@@ -8,9 +8,10 @@
   button compares the component templates of the device type with the
   components of the device, lets the user choose which properties to copy
   from the device type, and creates the missing components.
-- Supported NetBox versions are listed in the *Compatibility* section of
-  `README.md` and in the test matrix of `.github/workflows/test.yml`. Keep
-  both lists identical.
+- Supported NetBox versions are listed in `supported-netbox-versions.json`,
+  the single source of truth: the test matrix is built from it, and the
+  *Compatibility* table of `README.md` must list the same versions
+  (`scripts/netbox-versions.py check`, run by `lint.yml`).
 - Use only constructs, classes and APIs that exist in the supported NetBox
   versions. Before any work with code, consult the official NetBox
   documentation and the NetBox source code of the supported tag.
@@ -102,9 +103,16 @@ If `psycopg[c]` fails to build (no `pg_config`), install the requirements with
 
 ## Supporting a new NetBox version
 
-Do all of the following for every new NetBox version:
+New NetBox releases are checked automatically every day by
+`netbox-latest.yml` (see *GitHub Actions*). A new patch release of the newest
+supported minor version (e.g. 4.7.5) is added and released without a human
+when all tests pass. A new minor or major version (e.g. 4.8.0) gets a pull
+request instead, and a failure gets an issue. For a pull request, an issue,
+or a manual update, do all of the following:
 
-1. Add the version to the test matrix in `.github/workflows/test.yml`.
+1. Run `python scripts/netbox-versions.py add vX.Y.Z`: it adds the version to
+   `supported-netbox-versions.json` and the README table, bumps the PATCH
+   version and adds a CHANGELOG entry.
 2. Run the full test suite against that version. These tests must pass:
    - the Sync button is added to the *Device Type* card and is visible to a
      user with the `dcim.change_device` permission, and hidden from a user
@@ -114,9 +122,10 @@ Do all of the following for every new NetBox version:
    - the sync tests (diff, create, update, rollback).
 3. Read the NetBox release notes for changes to device components, component
    templates, `Device.save()`, `DeviceView` and `netbox.ui`.
-4. Update the *Compatibility* section of `README.md`, `min_version` in
-   `netbox_device_type_sync/__init__.py` if needed, and `CHANGELOG.md`.
-5. Bump the version (see below).
+4. Check the Device page (Sync button) and the sync page in a browser.
+5. Update `min_version` in `netbox_device_type_sync/__init__.py` if needed;
+   if code changes were necessary, describe them in `CHANGELOG.md` and bump
+   MINOR or PATCH as appropriate instead of the PATCH bump of step 1.
 
 Report every failing check to the user before changing code.
 
@@ -132,7 +141,8 @@ Report every failing check to the user before changing code.
   `netbox_device_type_sync/tests/test_load.py`. `scripts/version-check.py`
   compares them with the release tag.
 - Bump the version once per task. Propose the new version to the user and
-  wait for confirmation.
+  wait for confirmation. Exception, agreed with the user: `netbox-latest.yml`
+  bumps PATCH and releases by itself for a new NetBox patch release.
 
 ## GitHub Actions
 
@@ -145,6 +155,18 @@ Report every failing check to the user before changing code.
   of them (`workflow_call`) and publishes to PyPI only if the version check,
   the lint and all tests pass. Keep this dependency when changing the
   workflows.
+- `netbox-latest.yml` runs daily (and manually, as a dry run by default). It
+  classifies the latest stable NetBox release with
+  `scripts/netbox-versions.py classify` and tests it with `test.yml`:
+  - `patch`: on success it runs `netbox-versions.py add`, commits as
+    `Maksym Ototiuk <git@masik.slmail.me>`, tags, pushes to `main` and starts
+    `publish.yaml` with `workflow_dispatch` (a tag pushed with `GITHUB_TOKEN`
+    does not trigger workflows);
+  - `minor`: on success it opens a pull request from the branch
+    `netbox-vX.Y.Z` (requires *Allow GitHub Actions to create and approve
+    pull requests* in the repository settings);
+  - on failure it opens one issue per NetBox version;
+  - `supported` or `older`: nothing to do.
 
 ## Commits
 

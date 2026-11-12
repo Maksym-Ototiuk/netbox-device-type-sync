@@ -142,10 +142,15 @@ has a value and it differs from the device.
 | ------ | ----------------------- |
 | 4.7.4  | 1.0.0                   |
 
-Every NetBox version in this table has been tested with the plugin. Versions
-that are not listed are not guaranteed to work: the Sync button relies on the
-internal structure of the NetBox Device page (see
+Every NetBox version in this table has been tested with the plugin; the
+plugin version is the first release tested with it, and later plugin versions
+support it too. Versions that are not listed are not guaranteed to work: the
+Sync button relies on the internal structure of the NetBox Device page (see
 [Limitations](#limitations)).
+
+New NetBox releases are tested automatically every day. A new patch release
+of a supported NetBox version is added to this table, with a new plugin
+release, as soon as all tests pass with it.
 
 NetBox 4.7 requires Python 3.12 or later, PostgreSQL 15 or later and Redis 6
 or later.

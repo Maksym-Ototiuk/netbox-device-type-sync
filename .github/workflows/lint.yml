@@ -24,3 +24,6 @@ jobs:
         with:
           version: 0.15.22
           src: "./netbox_device_type_sync"
+
+      - name: Check the supported NetBox versions
+        run: python3 scripts/netbox-versions.py check

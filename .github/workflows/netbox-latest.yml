@@ -1,0 +1,157 @@
+name: Test the latest NetBox release
+
+# Once a day, test the plugin with the latest stable NetBox release if it is
+# not in supported-netbox-versions.json yet:
+#   - a new patch release of the newest supported minor version (e.g. 4.7.5):
+#     on success, add it to the supported versions, bump the plugin PATCH
+#     version, commit, tag and publish the release to PyPI;
+#   - a new minor or major version (e.g. 4.8.0): on success, open a pull
+#     request with the same changes, for the maintainer to review and merge;
+#   - on failure: open an issue (one per NetBox version).
+# A manual run is a dry run by default: it tests, but changes nothing.
+
+on:
+  schedule:
+    - cron: '17 5 * * *'
+  workflow_dispatch:
+    inputs:
+      dry-run:
+        description: 'Test only: no commit, release, pull request or issue'
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+# Scheduled runs have no inputs, so inputs.dry-run != true: they are never dry runs
+
+concurrency:
+  group: netbox-latest
+  cancel-in-progress: false
+
+jobs:
+  check:
+    name: Find the latest NetBox release
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.latest.outputs.version }}
+      kind: ${{ steps.latest.outputs.kind }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v6
+      - name: Classify the latest release
+        id: latest
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version=$(gh api repos/netbox-community/netbox/releases/latest --jq .tag_name)
+          kind=$(python3 scripts/netbox-versions.py classify "$version")
+          echo "Latest NetBox release: $version ($kind)"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "kind=$kind" >> "$GITHUB_OUTPUT"
+
+  test:
+    name: Test
+    needs: check
+    if: needs.check.outputs.kind == 'patch' || needs.check.outputs.kind == 'minor'
+    uses: ./.github/workflows/test.yml
+    with:
+      netbox-version: ${{ needs.check.outputs.version }}
+
+  release:
+    name: Release a PATCH version
+    needs: [check, test]
+    if: needs.check.outputs.kind == 'patch' && inputs.dry-run != true
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write   # push the commit and the tag
+      actions: write    # start publish.yaml
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v6
+        with:
+          ref: main
+      - name: Add the NetBox version and bump the plugin version
+        id: bump
+        env:
+          NETBOX_VERSION: ${{ needs.check.outputs.version }}
+        run: |
+          plugin_version=$(python3 scripts/netbox-versions.py add "$NETBOX_VERSION" | tail -n 1)
+          python3 scripts/version-check.py "v$plugin_version"
+          echo "plugin_version=$plugin_version" >> "$GITHUB_OUTPUT"
+      - name: Commit, tag and push
+        env:
+          NETBOX_VERSION: ${{ needs.check.outputs.version }}
+          PLUGIN_VERSION: ${{ steps.bump.outputs.plugin_version }}
+        run: |
+          git config user.name 'Maksym Ototiuk'
+          git config user.email 'git@masik.slmail.me'
+          git commit -am "Support NetBox ${NETBOX_VERSION#v}, release $PLUGIN_VERSION"
+          git tag -a "v$PLUGIN_VERSION" -m "Release $PLUGIN_VERSION"
+          git push origin main "v$PLUGIN_VERSION"
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PLUGIN_VERSION: ${{ steps.bump.outputs.plugin_version }}
+        run: gh workflow run publish.yaml --ref "v$PLUGIN_VERSION"
+
+  pull-request:
+    name: Open a pull request
+    needs: [check, test]
+    if: needs.check.outputs.kind == 'minor' && inputs.dry-run != true
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write        # push the branch
+      pull-requests: write   # open the pull request
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v6
+        with:
+          ref: main
+      - name: Open the pull request
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NETBOX_VERSION: ${{ needs.check.outputs.version }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          branch="netbox-$NETBOX_VERSION"
+          if git ls-remote --exit-code --heads origin "$branch" > /dev/null; then
+            echo "Branch $branch already exists"
+            exit 0
+          fi
+          git config user.name 'Maksym Ototiuk'
+          git config user.email 'git@masik.slmail.me'
+          git checkout -b "$branch"
+          plugin_version=$(python3 scripts/netbox-versions.py add "$NETBOX_VERSION" | tail -n 1)
+          git commit -am "Support NetBox ${NETBOX_VERSION#v}, release $plugin_version"
+          git push origin "$branch"
+          gh pr create --base main --head "$branch" \
+            --title "Support NetBox ${NETBOX_VERSION#v}" \
+            --body "NetBox $NETBOX_VERSION is a new minor or major version. The plugin tests passed with it: $RUN_URL
+
+          Before merging, follow *Supporting a new NetBox version* in CLAUDE.md: read the NetBox release notes and check the Device page and the sync page by hand. After merging, tag the release (v$plugin_version) to publish it."
+
+  report-failure:
+    name: Report the failure
+    needs: [check, test, release, pull-request]
+    if: failure() && needs.check.outputs.version != '' && inputs.dry-run != true
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - name: Open an issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          NETBOX_VERSION: ${{ needs.check.outputs.version }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          title="Tests fail with NetBox $NETBOX_VERSION"
+          existing=$(gh issue list --state open --search "\"$title\" in:title" --json number --jq 'length')
+          if [ "$existing" != "0" ]; then
+            echo "An issue for $NETBOX_VERSION is already open"
+            exit 0
+          fi
+          gh issue create --title "$title" --body "The plugin tests failed with NetBox $NETBOX_VERSION: $RUN_URL
+
+          The version was not added to the supported versions and nothing was published. See *Supporting a new NetBox version* in CLAUDE.md."

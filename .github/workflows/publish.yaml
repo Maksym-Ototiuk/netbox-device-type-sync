@@ -4,6 +4,9 @@ on:
   push:
     tags:
       - 'v*'
+  # Started by netbox-latest.yml for the tag it pushed: a tag pushed with
+  # GITHUB_TOKEN does not trigger the push event above
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -13,6 +16,11 @@ jobs:
     name: Validate version strings match
     runs-on: ubuntu-latest
     steps:
+      - name: Only release tags are published
+        if: github.ref_type != 'tag'
+        run: |
+          echo "Run this workflow for a release tag (v*), not for ${GITHUB_REF}" >&2
+          exit 1
       - name: Checkout repo
         uses: actions/checkout@v6
       - name: Setup Python
@@ -20,7 +28,9 @@ jobs:
         with:
           python-version: "3.12"
       - name: Check versions
-        run: python scripts/version-check.py "${{ github.ref_name }}"
+        env:
+          TAG: ${{ github.ref_name }}
+        run: python scripts/version-check.py "$TAG"
 
   lint:
     name: Lint
