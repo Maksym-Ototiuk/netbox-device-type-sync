@@ -12,8 +12,8 @@ name: Test the latest NetBox release
 
 on:
   schedule:
-    # 11:00 UTC: 12:00 in Germany in winter (CET), 13:00 in summer (CEST)
-    - cron: '0 11 * * *'
+    # 12:00 UTC
+    - cron: '0 12 * * *'
   workflow_dispatch:
     inputs:
       dry-run:
