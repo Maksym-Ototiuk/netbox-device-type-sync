@@ -155,6 +155,9 @@ Report every failing check to the user before changing code.
   of them (`workflow_call`) and publishes to PyPI only if the version check,
   the lint and all tests pass. Keep this dependency when changing the
   workflows.
+- `publish.yaml` publishes the GitHub Release right away (not as a draft),
+  with the CHANGELOG section of the version (`scripts/release-notes.py`)
+  as its notes, so every version needs a CHANGELOG section before its tag.
 - `netbox-latest.yml` runs daily at 12:27 UTC (and manually, as a dry run by default). It
   classifies the latest stable NetBox release with
   `scripts/netbox-versions.py classify` and tests it with `test.yml`:
