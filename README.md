@@ -145,6 +145,7 @@ has a value and it differs from the device.
 | ------ | ----------------------- |
 | 4.7.4  | 1.0.0                   |
 | 4.7.5  | 1.0.2                   |
+| 4.7.6  | 1.0.3                   |
 
 Every NetBox version in this table has been tested with the plugin; the
 plugin version is the first release tested with it, and later plugin versions
